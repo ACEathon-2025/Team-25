@@ -4,9 +4,11 @@
 <img width="358" height="358" alt="Screenshot 2025-10-07 213940" src="https://github.com/user-attachments/assets/1ecfda21-b463-4db4-92f9-da80f6fe1a9d" />
 
 ### 🚀 ACEathon 2025 | Online Phase Submission
-**Team Name:** Team Hydra
-**Project Duration:** 4th – 10th October 2025  
-**Category:** IoT + AI for Social Impact
+
+- **Team Name:** Team Hydra
+- **Member Names:** Tushar J Kumar and Abhishek SM
+- **Project Duration:** 4th – 10th October 2025  
+- **Category:** IoT + AI for Social Impact
 
 ---
 
