@@ -8,7 +8,7 @@
 - **Team Name:** Team Hydra
 - **Member Names:** Tushar J Kumar and Abhishek SM
 - **Project Duration:** 4th – 10th October 2025  
-- **Category:** IoT + AI for Social Impact
+- **Category:** IoT + AI for Social Impact 
 
 ---
 
