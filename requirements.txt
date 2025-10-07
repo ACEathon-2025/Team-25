@@ -1,0 +1,17 @@
+ACEathon SmartFishing Backend Dependencies (Python)
+Web Framework for API endpoints (e.g., /api/predict_pfz)
+Flask
+gunicorn # For production-like hosting (optional but good for scoring)
+
+Data Handling & Processing
+pandas
+numpy
+
+Simple Machine Learning (Prediction Logic Mockup)
+scikit-learn # For simple model loading/mock prediction
+
+Environment Variable Management
+python-dotenv
+
+For making requests to external APIs (e.g., OpenWeatherMap)
+requests
