@@ -1,0 +1,118 @@
+{
+  "name": "smartfishing-frontend",
+  "version": "1.0.0",
+  "description": "SmartFishing - IoT + AI system for safe and sustainable fishing | ACEathon 2025",
+  "author": "Team Hydra",
+  "license": "MIT",
+  "homepage": "https://github.com/your-username/smartfishing#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/smartfishing.git"
+  },
+  "keywords": [
+    "react",
+    "fishing",
+    "iot",
+    "ai",
+    "weather-alerts",
+    "safety",
+    "sustainability",
+    "aceathon",
+    "fishermen",
+    "real-time",
+    "emergency",
+    "navigation"
+  ],
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^3.3.2",
+    "axios": "^1.5.0",
+    "leaflet": "^1.9.4",
+    "react-leaflet": "^4.2.1",
+    "recharts": "^2.8.0",
+    "lucide-react": "^0.288.0",
+    "framer-motion": "^10.16.1",
+    "react-toastify": "^9.1.3",
+    "date-fns": "^2.30.0",
+    "react-helmet-async": "^2.0.4",
+    "workbox-background-sync": "^6.6.0",
+    "workbox-broadcast-update": "^6.6.0",
+    "workbox-cacheable-response": "^6.6.0",
+    "workbox-core": "^6.6.0",
+    "workbox-expiration": "^6.6.0",
+    "workbox-google-analytics": "^6.6.0",
+    "workbox-navigation-preload": "^6.6.0",
+    "workbox-precaching": "^6.6.0",
+    "workbox-range-requests": "^6.6.0",
+    "workbox-routing": "^6.6.0",
+    "workbox-strategies": "^6.6.0",
+    "workbox-streams": "^6.6.0"
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^14.5.1",
+    "@types/jest": "^27.5.2",
+    "@types/leaflet": "^1.9.4",
+    "@types/node": "^16.18.45",
+    "@types/react": "^18.2.25",
+    "@types/react-dom": "^18.2.11",
+    "eslint": "^8.50.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.0.3",
+    "typescript": "^4.9.5"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "test:coverage": "react-scripts test --coverage --watchAll=false",
+    "eject": "react-scripts eject",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
+    "format": "prettier --write src/**/*.{js,jsx,ts,tsx,json,css,md}",
+    "build:prod": "npm run build && npm run test:coverage",
+    "deploy": "npm run build && echo 'Deploy to GitHub Pages or other hosting'",
+    "analyze": "npm run build && npx serve -s build"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "src/**/*.{js,jsx,ts,tsx}",
+      "!src/index.js",
+      "!src/reportWebVitals.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 70,
+        "functions": 70,
+        "lines": 70,
+        "statements": 70
+      }
+    }
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "proxy": "http://localhost:3001",
+  "publishConfig": {
+    "access": "public"
+  }
+}
