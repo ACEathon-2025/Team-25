@@ -1,48 +1,48 @@
 const mongoose = require('mongoose');
 
-const fishingZoneSchema = new mongoose.Schema({
-    // Zone Identification
-    name: {
+const alertSchema = new mongoose.Schema({
+    // Basic Alert Information
+    type: {
         type: String,
-        required: [true, 'Zone name is required'],
-        trim: true,
-        maxlength: [100, 'Zone name cannot exceed 100 characters']
+        required: [true, 'Alert type is required'],
+        enum: {
+            values: [
+                'SOS_EMERGENCY',
+                'WEATHER_ALERT', 
+                'SAFETY_HAZARD',
+                'COMMUNITY_ALERT',
+                'SYSTEM_ALERT',
+                'FISHING_ZONE_ALERT',
+                'OFFSHORE_ALERT'
+            ],
+            message: 'Invalid alert type'
+        }
     },
-    zoneId: {
+    severity: {
         type: String,
-        required: [true, 'Zone ID is required'],
-        unique: true,
-        trim: true
+        required: [true, 'Alert severity is required'],
+        enum: {
+            values: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'],
+            message: 'Severity must be LOW, MEDIUM, HIGH, or CRITICAL'
+        },
+        default: 'MEDIUM'
+    },
+    title: {
+        type: String,
+        required: [true, 'Alert title is required'],
+        trim: true,
+        maxlength: [200, 'Title cannot exceed 200 characters']
     },
     description: {
         type: String,
+        required: [true, 'Alert description is required'],
         trim: true,
-        maxlength: [500, 'Description cannot exceed 500 characters']
+        maxlength: [1000, 'Description cannot exceed 1000 characters']
     },
 
     // Location Information
     location: {
-        type: {
-            type: String,
-            enum: ['Point'],
-            required: true,
-            default: 'Point'
-        },
         coordinates: {
-            type: [Number], // [longitude, latitude]
-            required: true,
-            validate: {
-                validator: function(coords) {
-                    return coords.length === 2 &&
-                           coords[0] >= -180 && coords[0] <= 180 &&
-                           coords[1] >= -90 && coords[1] <= 90;
-                },
-                message: 'Invalid coordinates format. Must be [longitude, latitude]'
-            }
-        }
-    },
-    bounds: {
-        northeast: {
             lat: {
                 type: Number,
                 required: true,
@@ -56,430 +56,308 @@ const fishingZoneSchema = new mongoose.Schema({
                 max: 180
             }
         },
-        southwest: {
-            lat: {
-                type: Number,
-                required: true,
-                min: -90,
-                max: 90
-            },
-            lng: {
-                type: Number,
-                required: true,
-                min: -180,
-                max: 180
-            }
+        name: String,
+        accuracy: {
+            type: Number, // in meters
+            min: [0, 'Accuracy cannot be negative']
         }
     },
     radius: {
-        type: Number, // in meters
-        required: true,
-        min: [100, 'Radius must be at least 100 meters']
+        type: Number, // in km
+        min: [0, 'Radius cannot be negative'],
+        default: 50
     },
 
-    // Zone Characteristics
-    depthRange: {
-        min: {
-            type: Number, // in meters
-            required: true,
-            min: [0, 'Minimum depth cannot be negative']
-        },
-        max: {
-            type: Number, // in meters
-            required: true,
-            min: [0, 'Maximum depth cannot be negative']
-        },
-        average: {
-            type: Number, // in meters
-            min: [0, 'Average depth cannot be negative']
+    // User Information
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: [true, 'User ID is required']
+    },
+    userName: {
+        type: String,
+        required: [true, 'User name is required'],
+        trim: true
+    },
+
+    // Alert Timing
+    triggeredAt: {
+        type: Date,
+        default: Date.now
+    },
+    expiresAt: {
+        type: Date,
+        required: [true, 'Expiration time is required'],
+        validate: {
+            validator: function(date) {
+                return date > new Date();
+            },
+            message: 'Expiration time must be in the future'
         }
     },
-    waterTemperature: {
-        current: {
-            type: Number, // in °C
-            min: [-2, 'Water temperature cannot be below -2°C'],
-            max: [40, 'Water temperature cannot exceed 40°C']
+    resolvedAt: Date,
+
+    // Alert Status
+    status: {
+        type: String,
+        enum: {
+            values: ['ACTIVE', 'RESOLVED', 'CANCELLED', 'EXPIRED'],
+            message: 'Status must be ACTIVE, RESOLVED, CANCELLED, or EXPIRED'
         },
-        range: {
-            min: {
-                type: Number,
-                min: [-2, 'Minimum temperature cannot be below -2°C']
-            },
-            max: {
-                type: Number,
-                max: [40, 'Maximum temperature cannot exceed 40°C']
-            }
-        }
+        default: 'ACTIVE'
     },
-    oxygenLevel: {
-        type: Number, // in mg/L
-        min: [0, 'Oxygen level cannot be negative'],
-        max: [20, 'Oxygen level cannot exceed 20 mg/L']
-    },
-    salinity: {
-        type: Number, // in ppt
-        min: [0, 'Salinity cannot be negative'],
-        max: [50, 'Salinity cannot exceed 50 ppt']
-    },
-    currentSpeed: {
-        type: Number, // in m/s
-        min: [0, 'Current speed cannot be negative'],
-        max: [10, 'Current speed cannot exceed 10 m/s']
+    priority: {
+        type: String,
+        enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'],
+        default: 'MEDIUM'
     },
 
-    // Fish Species Information
-    commonSpecies: [{
-        name: {
+    // Emergency Specific Fields
+    emergencyData: {
+        sosType: {
             type: String,
-            required: true,
-            trim: true
+            enum: ['MEDICAL', 'MECHANICAL', 'WEATHER', 'SAFETY', 'OTHER']
         },
-        scientificName: String,
-        abundance: {
+        assistanceRequired: {
             type: String,
-            enum: ['LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH'],
-            default: 'MEDIUM'
+            enum: ['MEDICAL', 'TOWING', 'FUEL', 'REPAIRS', 'GUIDANCE', 'OTHER']
         },
-        season: {
-            start: String, // e.g., "January"
-            end: String    // e.g., "March"
-        },
-        averageSize: Number, // in cm
-        catchRate: {
-            type: Number, // percentage
-            min: 0,
-            max: 100
-        }
-    }],
-    endangeredSpecies: [{
-        name: String,
-        protectionLevel: {
+        message: {
             type: String,
-            enum: ['PROTECTED', 'ENDANGERED', 'CRITICAL']
+            maxlength: [500, 'Emergency message cannot exceed 500 characters']
         },
-        restrictions: [String]
-    }],
-
-    // Fishing Conditions
-    fishingConditions: {
-        bestTime: {
-            timeOfDay: [{
-                type: String,
-                enum: ['EARLY_MORNING', 'MORNING', 'AFTERNOON', 'EVENING', 'NIGHT']
-            }],
-            tide: {
-                type: String,
-                enum: ['LOW', 'RISING', 'HIGH', 'FALLING', 'ANY']
-            },
-            season: [String]
-        },
-        recommendedMethods: [{
-            type: String,
-            enum: ['NET', 'LINE', 'TRAP', 'SPEAR', 'DIVING', 'OTHER']
-        }],
-        difficulty: {
-            type: String,
-            enum: ['EASY', 'MEDIUM', 'HARD', 'EXPERT'],
-            default: 'MEDIUM'
-        },
-        accessibility: {
-            type: String,
-            enum: ['EASY', 'MODERATE', 'DIFFICULT', 'RESTRICTED'],
-            default: 'MODERATE'
-        }
+        contactNumber: String
     },
 
-    // AI Prediction Data
-    prediction: {
-        confidence: {
-            type: Number, // 0-100
-            min: 0,
-            max: 100,
-            default: 0
-        },
-        probability: {
-            type: Number, // 0-1
-            min: 0,
-            max: 1,
-            default: 0
-        },
-        factors: [{
-            name: String,
-            value: Number,
-            weight: Number,
-            impact: {
-                type: String,
-                enum: ['POSITIVE', 'NEGATIVE', 'NEUTRAL']
-            }
-        }],
-        lastUpdated: Date,
-        modelVersion: String
+    // Weather Alert Specific Fields
+    weatherAlertData: {
+        condition: String,
+        windSpeed: Number, // km/h
+        waveHeight: Number, // meters
+        temperature: Number, // °C
+        precipitation: Number, // percentage
+        visibility: Number, // km
+        stormDistance: Number // km
     },
 
-    // Safety Information
-    safety: {
-        hazards: [{
-            type: {
-                type: String,
-                enum: ['CURRENT', 'ROCKS', 'TRAFFIC', 'WEATHER', 'MARINE_LIFE', 'OTHER']
-            },
-            description: String,
-            severity: {
-                type: String,
-                enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
-            },
-            location: {
-                coordinates: {
-                    lat: Number,
-                    lng: Number
-                },
-                radius: Number
-            }
-        }],
-        restrictions: [{
+    // Safety Hazard Specific Fields
+    safetyHazardData: {
+        hazardType: {
             type: String,
-            enum: ['NO_FISHING', 'SEASONAL', 'SIZE_LIMIT', 'CATCH_LIMIT', 'GEAR_RESTRICTION']
-        }],
-        emergencyContacts: [{
-            name: String,
-            phone: String,
-            type: {
-                type: String,
-                enum: ['COAST_GUARD', 'HARBOR_MASTER', 'LOCAL_AUTHORITY', 'OTHER']
-            }
-        }]
-    },
-
-    // Historical Performance
-    historicalData: {
-        totalVisits: {
-            type: Number,
-            min: 0,
-            default: 0
+            enum: ['STRONG_CURRENT', 'ROCKS', 'DEBRIS', 'LOW_VISIBILITY', 'MARINE_LIFE', 'OTHER']
         },
-        successRate: {
-            type: Number, // percentage
-            min: 0,
-            max: 100,
-            default: 0
-        },
-        averageCatch: {
-            type: Number, // kg per trip
-            min: 0,
-            default: 0
-        },
-        lastSuccessfulTrip: Date,
-        popularTimes: [{
-            hour: {
-                type: Number,
-                min: 0,
-                max: 23
-            },
-            visitCount: {
-                type: Number,
-                min: 0
-            }
-        }]
-    },
-
-    // User Ratings and Reviews
-    ratings: {
-        average: {
-            type: Number,
-            min: 0,
-            max: 5,
-            default: 0
-        },
-        count: {
-            type: Number,
-            min: 0,
-            default: 0
-        },
-        reviews: [{
-            userId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'User'
-            },
-            rating: {
-                type: Number,
-                min: 1,
-                max: 5,
-                required: true
-            },
-            comment: {
-                type: String,
-                maxlength: [500, 'Review comment cannot exceed 500 characters']
-            },
-            catchDetails: {
-                species: [String],
-                totalWeight: Number,
-                fishingMethod: String
-            },
-            createdAt: {
+        riskLevel: String,
+        recommendedAction: String,
+        confirmedBy: [{
+            userId: mongoose.Schema.Types.ObjectId,
+            userName: String,
+            confirmedAt: {
                 type: Date,
                 default: Date.now
             }
         }]
     },
 
-    // Zone Status
-    status: {
-        type: String,
-        enum: ['ACTIVE', 'INACTIVE', 'RESTRICTED', 'SEASONAL'],
-        default: 'ACTIVE'
+    // Response Information
+    response: {
+        acknowledgedBy: [{
+            userId: mongoose.Schema.Types.ObjectId,
+            userName: String,
+            acknowledgedAt: {
+                type: Date,
+                default: Date.now
+            },
+            role: String
+        }],
+        assistanceProvided: [{
+            providerId: mongoose.Schema.Types.ObjectId,
+            providerName: String,
+            assistanceType: String,
+            providedAt: {
+                type: Date,
+                default: Date.now
+            },
+            notes: String
+        }],
+        resolutionNotes: {
+            type: String,
+            maxlength: [1000, 'Resolution notes cannot exceed 1000 characters']
+        },
+        resolvedBy: {
+            userId: mongoose.Schema.Types.ObjectId,
+            userName: String
+        }
     },
-    isRecommended: {
-        type: Boolean,
-        default: false
-    },
-    popularity: {
-        type: Number, // 0-100
-        min: 0,
-        max: 100,
-        default: 0
+
+    // Notification Tracking
+    notifications: {
+        smsSent: {
+            type: Boolean,
+            default: false
+        },
+        pushSent: {
+            type: Boolean,
+            default: false
+        },
+        emailSent: {
+            type: Boolean,
+            default: false
+        },
+        authoritiesNotified: {
+            type: Boolean,
+            default: false
+        },
+        communityNotified: {
+            type: Boolean,
+            default: false
+        }
     },
 
     // Metadata
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-    },
     source: {
         type: String,
-        enum: ['AI_PREDICTION', 'USER_SUBMISSION', 'OFFICIAL_DATA', 'COMMUNITY'],
-        default: 'AI_PREDICTION'
+        enum: ['USER', 'SYSTEM', 'AUTOMATED', 'EXTERNAL'],
+        default: 'USER'
+    },
+    externalId: String, // ID from external systems
+    dataSource: String, // Source of data for automated alerts
+    confidence: {
+        type: Number, // 0-100
+        min: 0,
+        max: 100,
+        default: 80
     },
     tags: [String],
-    notes: {
-        type: String,
-        maxlength: [1000, 'Notes cannot exceed 1000 characters']
-    }
+
+    // Analytics
+    viewCount: {
+        type: Number,
+        min: 0,
+        default: 0
+    },
+    responseTime: Number, // Time to first response in seconds
 
 }, {
     timestamps: true
 });
 
-// Indexes for geospatial queries
-fishingZoneSchema.index({ 'location': '2dsphere' });
-fishingZoneSchema.index({ zoneId: 1 });
-fishingZoneSchema.index({ status: 1 });
-fishingZoneSchema.index({ 'prediction.confidence': -1 });
-fishingZoneSchema.index({ 'ratings.average': -1 });
-fishingZoneSchema.index({ popularity: -1 });
-fishingZoneSchema.index({ isRecommended: 1 });
+// Indexes for better query performance
+alertSchema.index({ type: 1 });
+alertSchema.index({ severity: 1 });
+alertSchema.index({ status: 1 });
+alertSchema.index({ userId: 1 });
+alertSchema.index({ 'location.coordinates': '2dsphere' });
+alertSchema.index({ triggeredAt: -1 });
+alertSchema.index({ expiresAt: 1 });
+alertSchema.index({ status: 1, expiresAt: 1 });
 
-// Virtual for zone area (approximate)
-fishingZoneSchema.virtual('area').get(function() {
-    // Calculate approximate area in square km
-    const area = Math.PI * Math.pow(this.radius / 1000, 2);
-    return Math.round(area * 100) / 100;
+// Virtual for alert duration
+alertSchema.virtual('duration').get(function() {
+    if (!this.triggeredAt) return 0;
+    const resolved = this.resolvedAt || new Date();
+    return Math.floor((resolved - this.triggeredAt) / 1000); // in seconds
 });
 
-// Virtual for depth range description
-fishingZoneSchema.virtual('depthDescription').get(function() {
-    if (this.depthRange.min === this.depthRange.max) {
-        return `${this.depthRange.min}m`;
+// Virtual for isExpired
+alertSchema.virtual('isExpired').get(function() {
+    return new Date() > this.expiresAt;
+});
+
+// Virtual for isActive
+alertSchema.virtual('isActive').get(function() {
+    return this.status === 'ACTIVE' && !this.isExpired;
+});
+
+// Pre-save middleware to update status if expired
+alertSchema.pre('save', function(next) {
+    if (this.isExpired && this.status === 'ACTIVE') {
+        this.status = 'EXPIRED';
+        this.resolvedAt = new Date();
     }
-    return `${this.depthRange.min}-${this.depthRange.max}m`;
+    next();
 });
 
-// Instance method to update prediction
-fishingZoneSchema.methods.updatePrediction = async function(confidence, probability, factors = []) {
-    this.prediction.confidence = confidence;
-    this.prediction.probability = probability;
-    this.prediction.factors = factors;
-    this.prediction.lastUpdated = new Date();
-    
-    return this.save();
-};
+// Instance method to acknowledge alert
+alertSchema.methods.acknowledge = async function(userId, userName, role = 'USER') {
+    const existingAck = this.response.acknowledgedBy.find(
+        ack => ack.userId.toString() === userId.toString()
+    );
 
-// Instance method to add rating
-fishingZoneSchema.methods.addRating = async function(userId, rating, comment = '', catchDetails = {}) {
-    // Add new review
-    this.ratings.reviews.push({
-        userId: userId,
-        rating: rating,
-        comment: comment,
-        catchDetails: catchDetails
-    });
+    if (!existingAck) {
+        this.response.acknowledgedBy.push({
+            userId: userId,
+            userName: userName,
+            role: role,
+            acknowledgedAt: new Date()
+        });
 
-    // Recalculate average rating
-    const totalRatings = this.ratings.reviews.length;
-    const sumRatings = this.ratings.reviews.reduce((sum, review) => sum + review.rating, 0);
-    
-    this.ratings.average = sumRatings / totalRatings;
-    this.ratings.count = totalRatings;
-
-    // Update popularity based on ratings and visits
-    this.popularity = Math.min(100, (this.ratings.average * 10) + (this.historicalData.totalVisits * 0.1));
-
-    return this.save();
-};
-
-// Instance method to record visit
-fishingZoneSchema.methods.recordVisit = async function(successful = false, catchWeight = 0) {
-    this.historicalData.totalVisits += 1;
-
-    if (successful) {
-        // Update success rate
-        const successfulTrips = this.ratings.reviews.filter(review => 
-            review.catchDetails && review.catchDetails.totalWeight > 0
-        ).length + (successful ? 1 : 0);
-        
-        this.historicalData.successRate = (successfulTrips / this.historicalData.totalVisits) * 100;
-
-        // Update average catch
-        const totalCatch = this.ratings.reviews.reduce((sum, review) => 
-            sum + (review.catchDetails?.totalWeight || 0), 0
-        ) + catchWeight;
-        
-        this.historicalData.averageCatch = totalCatch / successfulTrips;
-
-        if (successful) {
-            this.historicalData.lastSuccessfulTrip = new Date();
+        // Calculate response time if this is the first acknowledgment
+        if (this.response.acknowledgedBy.length === 1) {
+            this.responseTime = Math.floor((new Date() - this.triggeredAt) / 1000);
         }
+
+        return this.save();
     }
 
-    // Update popularity
-    this.popularity = Math.min(100, this.popularity + 1);
-
-    return this.save();
+    return this;
 };
 
-// Instance method to add hazard
-fishingZoneSchema.methods.addHazard = async function(hazardType, description, severity, location = null) {
-    this.safety.hazards.push({
-        type: hazardType,
-        description: description,
-        severity: severity,
-        location: location
+// Instance method to provide assistance
+alertSchema.methods.provideAssistance = async function(providerId, providerName, assistanceType, notes = '') {
+    this.response.assistanceProvided.push({
+        providerId: providerId,
+        providerName: providerName,
+        assistanceType: assistanceType,
+        notes: notes,
+        providedAt: new Date()
     });
 
     return this.save();
 };
 
-// Static method to find zones near location
-fishingZoneSchema.statics.findNearbyZones = function(coordinates, maxDistance = 50000, limit = 20) {
-    return this.find({
-        'location': {
-            $near: {
-                $geometry: {
-                    type: 'Point',
-                    coordinates: [coordinates.lng, coordinates.lat]
-                },
-                $maxDistance: maxDistance
-            }
-        },
-        status: 'ACTIVE'
-    })
-    .sort({ 'prediction.confidence': -1, popularity: -1 })
-    .limit(limit);
+// Instance method to resolve alert
+alertSchema.methods.resolve = async function(resolvedByUserId, resolvedByUserName, notes = '') {
+    this.status = 'RESOLVED';
+    this.resolvedAt = new Date();
+    this.response.resolvedBy = {
+        userId: resolvedByUserId,
+        userName: resolvedByUserName
+    };
+    this.response.resolutionNotes = notes;
+
+    return this.save();
 };
 
-// Static method to find recommended zones
-fishingZoneSchema.statics.findRecommendedZones = function(coordinates, maxDistance = 50000, limit = 10) {
+// Instance method to confirm safety hazard
+alertSchema.methods.confirmHazard = async function(userId, userName) {
+    if (this.type !== 'SAFETY_HAZARD') {
+        throw new Error('Can only confirm safety hazard alerts');
+    }
+
+    const existingConfirmation = this.safetyHazardData.confirmedBy.find(
+        conf => conf.userId.toString() === userId.toString()
+    );
+
+    if (!existingConfirmation) {
+        this.safetyHazardData.confirmedBy.push({
+            userId: userId,
+            userName: userName,
+            confirmedAt: new Date()
+        });
+
+        // Increase confidence with more confirmations
+        this.confidence = Math.min(100, this.confidence + 10);
+
+        return this.save();
+    }
+
+    return this;
+};
+
+// Static method to find active alerts for location
+alertSchema.statics.findActiveAlerts = function(coordinates, maxDistance = 50000) {
     return this.find({
-        'location': {
+        'location.coordinates': {
             $near: {
                 $geometry: {
                     type: 'Point',
@@ -489,77 +367,127 @@ fishingZoneSchema.statics.findRecommendedZones = function(coordinates, maxDistan
             }
         },
         status: 'ACTIVE',
-        isRecommended: true,
-        'prediction.confidence': { $gte: 70 }
-    })
-    .sort({ 'prediction.confidence': -1, 'ratings.average': -1 })
-    .limit(limit);
+        expiresAt: { $gt: new Date() }
+    }).sort({ severity: -1, triggeredAt: -1 });
 };
 
-// Static method to get zone statistics
-fishingZoneSchema.statics.getZoneStats = async function() {
+// Static method to find expired alerts
+alertSchema.statics.findExpiredAlerts = function() {
+    return this.find({
+        status: 'ACTIVE',
+        expiresAt: { $lte: new Date() }
+    });
+};
+
+// Static method to get alert statistics
+alertSchema.statics.getAlertStats = async function(days = 30) {
+    const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
     const stats = await this.aggregate([
+        {
+            $match: {
+                triggeredAt: { $gte: startDate }
+            }
+        },
         {
             $group: {
                 _id: null,
-                totalZones: { $sum: 1 },
-                activeZones: {
-                    $sum: { $cond: [{ $eq: ['$status', 'ACTIVE'] }, 1, 0] }
-                },
-                recommendedZones: {
-                    $sum: { $cond: ['$isRecommended', 1, 0] }
-                },
-                avgConfidence: { $avg: '$prediction.confidence' },
-                avgRating: { $avg: '$ratings.average' },
-                totalVisits: { $sum: '$historicalData.totalVisits' },
-                totalSuccessfulTrips: {
-                    $sum: {
-                        $multiply: [
-                            '$historicalData.totalVisits',
-                            { $divide: ['$historicalData.successRate', 100] }
-                        ]
+                totalAlerts: { $sum: 1 },
+                byType: {
+                    $push: {
+                        type: '$type',
+                        severity: '$severity'
                     }
+                },
+                bySeverity: {
+                    $push: '$severity'
+                },
+                avgResponseTime: { $avg: '$responseTime' },
+                resolvedCount: {
+                    $sum: {
+                        $cond: [{ $eq: ['$status', 'RESOLVED'] }, 1, 0]
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                totalAlerts: 1,
+                typeBreakdown: {
+                    $arrayToObject: {
+                        $map: {
+                            input: '$byType',
+                            as: 'alert',
+                            in: {
+                                k: '$$alert.type',
+                                v: {
+                                    $sum: {
+                                        $cond: [{ $eq: ['$$alert.type', '$$alert.type'] }, 1, 0]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                severityBreakdown: {
+                    $arrayToObject: {
+                        $map: {
+                            input: '$bySeverity',
+                            as: 'sev',
+                            in: {
+                                k: '$$sev',
+                                v: {
+                                    $sum: {
+                                        $cond: [{ $eq: ['$$sev', '$$sev'] }, 1, 0]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                avgResponseTime: { $round: ['$avgResponseTime', 2] },
+                resolutionRate: {
+                    $round: [
+                        {
+                            $multiply: [
+                                { $divide: ['$resolvedCount', '$totalAlerts'] },
+                                100
+                            ]
+                        },
+                        2
+                    ]
                 }
             }
         }
     ]);
 
     return stats[0] || {
-        totalZones: 0,
-        activeZones: 0,
-        recommendedZones: 0,
-        avgConfidence: 0,
-        avgRating: 0,
-        totalVisits: 0,
-        totalSuccessfulTrips: 0
+        totalAlerts: 0,
+        typeBreakdown: {},
+        severityBreakdown: {},
+        avgResponseTime: 0,
+        resolutionRate: 0
     };
 };
 
-// Static method to update all zone predictions
-fishingZoneSchema.statics.updateAllPredictions = async function(predictionData) {
-    // This would typically be called by the AI prediction service
-    const bulkOps = predictionData.map(prediction => ({
-        updateOne: {
-            filter: { zoneId: prediction.zoneId },
-            update: {
-                $set: {
-                    'prediction.confidence': prediction.confidence,
-                    'prediction.probability': prediction.probability,
-                    'prediction.factors': prediction.factors,
-                    'prediction.lastUpdated': new Date(),
-                    'prediction.modelVersion': prediction.modelVersion
-                }
+// Static method to cleanup expired alerts
+alertSchema.statics.cleanupExpiredAlerts = async function() {
+    const result = await this.updateMany(
+        {
+            status: 'ACTIVE',
+            expiresAt: { $lte: new Date() }
+        },
+        {
+            $set: {
+                status: 'EXPIRED',
+                resolvedAt: new Date()
             }
         }
-    }));
+    );
 
-    if (bulkOps.length > 0) {
-        await this.bulkWrite(bulkOps);
-    }
-
-    return { updated: bulkOps.length };
+    return result;
 };
 
-const FishingZone = mongoose.model('FishingZone', fishingZoneSchema);
+const Alert = mongoose.model('Alert', alertSchema);
 
-module.exports = FishingZone;
+module.exports = Alert;
