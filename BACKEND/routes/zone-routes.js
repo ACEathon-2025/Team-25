@@ -289,5 +289,3 @@ function generateWeatherRecommendations(weather) {
 }
 
 module.exports = router;
-
-module.exports = router;
