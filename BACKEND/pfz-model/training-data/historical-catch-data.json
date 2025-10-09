@@ -1,0 +1,62 @@
+[
+  {
+    "date": "2024-01-15",
+    "location": "Mumbai Coast",
+    "region": "west",
+    "depth": 12,
+    "catchAmount": 85,
+    "fishSpecies": ["Pomfret", "Mackerel"],
+    "weatherConditions": "Clear",
+    "waterTemperature": 26
+  },
+  {
+    "date": "2024-01-16",
+    "location": "Goa Coast",
+    "region": "west",
+    "depth": 18,
+    "catchAmount": 120,
+    "fishSpecies": ["Tuna", "Kingfish"],
+    "weatherConditions": "Partly Cloudy",
+    "waterTemperature": 28
+  },
+  {
+    "date": "2024-01-17",
+    "location": "Chennai Coast",
+    "region": "east",
+    "depth": 25,
+    "catchAmount": 65,
+    "fishSpecies": ["Sardine", "Anchovy"],
+    "weatherConditions": "Rain",
+    "waterTemperature": 24
+  },
+  {
+    "date": "2024-01-18",
+    "location": "Kochi Coast",
+    "region": "south",
+    "depth": 15,
+    "catchAmount": 95,
+    "fishSpecies": ["Seer Fish", "Pearl Spot"],
+    "weatherConditions": "Clear",
+    "waterTemperature": 29
+  },
+  {
+    "date": "2024-01-19",
+    "location": "Kolkata Coast",
+    "region": "east",
+    "depth": 30,
+    "catchAmount": 45,
+    "fishSpecies": ["Hilsa", "Prawn"],
+    "weatherConditions": "Storm",
+    "waterTemperature": 22
+  },
+  {
+    "date": "2024-01-20",
+    "location": "Mumbai Coast",
+    "region": "west",
+    "depth": 8,
+    "catchAmount": 110,
+    "fishSpecies": ["Bombay Duck", "Pomfret"],
+    "weatherConditions": "Clear",
+    "waterTemperature": 27
+  }
+]
