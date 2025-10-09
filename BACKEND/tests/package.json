@@ -1,0 +1,25 @@
+{
+  "name": "smartfishing-tests",
+  "scripts": {
+    "test": "jest",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "test:performance": "jest tests/performance",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "supertest": "^6.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "utils/**/*.js",
+      "routes/**/*.js",
+      "!**/node_modules/**"
+    ],
+    "coverageDirectory": "coverage",
+    "setupFilesAfterEnv": ["./tests/setup.js"]
+  }
+}
