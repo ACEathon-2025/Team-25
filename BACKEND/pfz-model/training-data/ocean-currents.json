@@ -1,0 +1,56 @@
+[
+  {
+    "date": "2024-01-15",
+    "region": "west",
+    "currentSpeed": 0.8,
+    "waterTemperature": 26,
+    "salinity": 35,
+    "tide": "high",
+    "waveDirection": "SW"
+  },
+  {
+    "date": "2024-01-16",
+    "region": "west",
+    "currentSpeed": 0.5,
+    "waterTemperature": 28,
+    "salinity": 34,
+    "tide": "low",
+    "waveDirection": "W"
+  },
+  {
+    "date": "2024-01-17",
+    "region": "east",
+    "currentSpeed": 1.2,
+    "waterTemperature": 24,
+    "salinity": 33,
+    "tide": "rising",
+    "waveDirection": "NE"
+  },
+  {
+    "date": "2024-01-18",
+    "region": "south",
+    "currentSpeed": 0.3,
+    "waterTemperature": 29,
+    "salinity": 36,
+    "tide": "high",
+    "waveDirection": "S"
+  },
+  {
+    "date": "2024-01-19",
+    "region": "east",
+    "currentSpeed": 1.8,
+    "waterTemperature": 22,
+    "salinity": 32,
+    "tide": "falling",
+    "waveDirection": "E"
+  },
+  {
+    "date": "2024-01-20",
+    "region": "west",
+    "currentSpeed": 0.6,
+    "waterTemperature": 27,
+    "salinity": 35,
+    "tide": "high",
+    "waveDirection": "SW"
+  }
+]
