@@ -1,0 +1,62 @@
+[
+  {
+    "date": "2024-01-15",
+    "location": "Mumbai Coast",
+    "temperature": 26,
+    "windSpeed": 12,
+    "waveHeight": 1.2,
+    "humidity": 75,
+    "pressure": 1013,
+    "weatherCondition": "Clear"
+  },
+  {
+    "date": "2024-01-16",
+    "location": "Goa Coast",
+    "temperature": 28,
+    "windSpeed": 8,
+    "waveHeight": 0.8,
+    "humidity": 70,
+    "pressure": 1015,
+    "weatherCondition": "Partly Cloudy"
+  },
+  {
+    "date": "2024-01-17",
+    "location": "Chennai Coast",
+    "temperature": 24,
+    "windSpeed": 25,
+    "waveHeight": 2.5,
+    "humidity": 85,
+    "pressure": 1005,
+    "weatherCondition": "Rain"
+  },
+  {
+    "date": "2024-01-18",
+    "location": "Kochi Coast",
+    "temperature": 29,
+    "windSpeed": 6,
+    "waveHeight": 0.6,
+    "humidity": 68,
+    "pressure": 1012,
+    "weatherCondition": "Clear"
+  },
+  {
+    "date": "2024-01-19",
+    "location": "Kolkata Coast",
+    "temperature": 22,
+    "windSpeed": 35,
+    "waveHeight": 3.2,
+    "humidity": 90,
+    "pressure": 998,
+    "weatherCondition": "Storm"
+  },
+  {
+    "date": "2024-01-20",
+    "location": "Mumbai Coast",
+    "temperature": 27,
+    "windSpeed": 10,
+    "waveHeight": 1.0,
+    "humidity": 72,
+    "pressure": 1014,
+    "weatherCondition": "Clear"
+  }
+]
