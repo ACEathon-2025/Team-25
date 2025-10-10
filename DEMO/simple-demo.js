@@ -2,12 +2,12 @@
 const http = require('http');
 const twilio = require('twilio');
 
-// ==================== CONFIGURATION (Externalize in a real app) ====================
+// ==================== CONFIGURATION (Environment Variables) ====================
 const CONFIG = {
-    accountSid: 'AC9b2c6463fadf90bbd18ba6ac704436b0',
-    authToken: 'fb1fa2d7333401e583a3c355e1a1aca2',
+    accountSid: process.env.TWILIO_ACCOUNT_SID || 'AC9b2c6463fadf90bbd18ba6ac704436b0',
+    authToken: process.env.TWILIO_AUTH_TOKEN || 'e8e29b9e9c8ae857c31ef74ab26dfcdf',
     twilioPhoneNumber: '+12294591257',
-    port: 3000,
+    port: process.env.PORT || 3000,
     emergencyContacts: {
         coast_guard: '+918660434815',     // Indian Coast Guard
         family: [
@@ -24,15 +24,23 @@ try {
     if (!CONFIG.accountSid || !CONFIG.authToken) {
         throw new Error('Twilio credentials missing from CONFIG.');
     }
+    
+    // Validate Twilio credentials format
+    if (!CONFIG.accountSid.startsWith('AC') || CONFIG.authToken.length !== 32) {
+        throw new Error('Invalid Twilio credentials format.');
+    }
+    
     client = twilio(CONFIG.accountSid, CONFIG.authToken);
     console.log('✅ Twilio client initialized successfully');
 } catch (error) {
     console.error('❌ Failed to initialize Twilio client:', error.message);
+    console.log('💡 Using demo mode only. Set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment variables for real SMS.');
     client = null;
 }
 
 // Helper function for sending JSON responses
 function sendJsonResponse(res, statusCode, data) {
+    res.setHeader('Content-Type', 'application/json');
     res.statusCode = statusCode;
     res.end(JSON.stringify(data));
 }
@@ -98,7 +106,7 @@ function handleEmergency(req, res) {
     });
 }
 
-function handleEmergencySms(req, res) {
+async function handleEmergencySms(req, res) {
     console.log('📱 EMERGENCY SMS ENDPOINT TRIGGERED');
 
     let body = '';
@@ -122,7 +130,8 @@ function handleEmergencySms(req, res) {
                 if (!client) {
                     return sendJsonResponse(res, 503, {
                         success: false,
-                        message: "Twilio client not initialized. Check credentials or connection."
+                        message: "Twilio client not initialized. Check credentials or connection.",
+                        note: "Set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment variables"
                     });
                 }
 
@@ -146,15 +155,21 @@ function handleEmergencySms(req, res) {
                     ...CONFIG.emergencyContacts.nearby_boats.map(num => ({ number: num, type: 'Boat', key: 'nearby_boats' })),
                 ];
 
+                let hasSuccessfulSend = false;
+
                 for (const contact of contacts) {
                     if (!contact.number) continue; 
                     
                     try {
-                        await client.messages.create({
+                        console.log(`📤 Attempting to send SMS to ${contact.type}: ${contact.number}`);
+                        
+                        const message = await client.messages.create({
                             body: emergencyMessage,
                             from: CONFIG.twilioPhoneNumber,
                             to: contact.number
                         });
+                        
+                        console.log(`✅ SMS sent successfully to ${contact.type}: ${contact.number} (SID: ${message.sid})`);
                         
                         if (contact.key === 'coast_guard') {
                             smsResults.coast_guard = true;
@@ -162,20 +177,23 @@ function handleEmergencySms(req, res) {
                             smsResults[contact.key]++;
                         }
                         smsResults.total_sent++;
-                        console.log(`✅ SMS sent to ${contact.type}: ${contact.number}`);
+                        hasSuccessfulSend = true;
                         
                     } catch (err) {
-                        const twilioError = err.message || JSON.stringify(err);
-                        smsResults.errors.push(`${contact.type} (${contact.number}): ${twilioError}`);
-                        console.error(`❌ SMS failed for ${contact.type} (${contact.number}):`, twilioError);
+                        const errorMessage = err.message || JSON.stringify(err);
+                        const errorCode = err.code || 'UNKNOWN_ERROR';
+                        smsResults.errors.push(`${contact.type} (${contact.number}): ${errorMessage} [Code: ${errorCode}]`);
+                        console.error(`❌ SMS failed for ${contact.type} (${contact.number}):`, errorMessage, `[Code: ${errorCode}]`);
                     }
                 }
 
-                sendJsonResponse(res, 200, {
-                    success: smsResults.errors.length === smsResults.total_sent ? false : true,
-                    message: smsResults.errors.length === 0 
-                             ? "🚨 REAL EMERGENCY SMS ALERTS SENT SUCCESSFULLY!" 
-                             : "⚠️ Alerts partially sent. Check errors for details.",
+                const success = hasSuccessfulSend || smsResults.total_sent > 0;
+                
+                sendJsonResponse(res, success ? 200 : 500, {
+                    success: success,
+                    message: success 
+                        ? (smsResults.errors.length > 0 ? "⚠️ Alerts partially sent. Check errors for details." : "🚨 REAL EMERGENCY SMS ALERTS SENT SUCCESSFULLY!")
+                        : "❌ Failed to send any SMS alerts.",
                     sms_results: smsResults,
                     alert: {
                         fisherman_id: fishermanId,
@@ -184,7 +202,9 @@ function handleEmergencySms(req, res) {
                         timestamp: new Date().toISOString(),
                         rescue_eta: "15-20 minutes"
                     },
-                    note: "Check server console for the EXACT Twilio error code."
+                    note: smsResults.errors.length > 0 
+                        ? "Check server console for detailed Twilio error codes."
+                        : "All messages sent successfully."
                 });
             }
 
@@ -215,7 +235,8 @@ function handleEmergencySms(req, res) {
             console.error('❌ SMS Processing Error:', err.message);
             sendJsonResponse(res, 500, {
                 success: false,
-                message: "Internal server error processing emergency request."
+                message: "Internal server error processing emergency request.",
+                error: err.message
             });
         }
     });
@@ -225,7 +246,7 @@ function handleDefault(req, res) {
     sendJsonResponse(res, 200, {
         success: true,
         message: "🌊 SmartFishing AI Ocean Monitoring System - LIVE",
-        version: "2.3 Competition Edition (Minimal SMS Fixed)",
+        version: "2.4 Competition Edition (Enhanced Error Handling)",
         features: [
             "Real-time Ocean Sensor Monitoring",
             "AI-Powered Fishing Zone Predictions",
@@ -234,7 +255,8 @@ function handleDefault(req, res) {
             "Twilio Integrated Communications"
         ],
         twilio_status: client ? "ACTIVE ✅" : "INACTIVE ⚠️",
-        server_time: new Date().toISOString()
+        server_time: new Date().toISOString(),
+        note: client ? "SMS system ready" : "SMS in demo mode - set environment variables for real SMS"
     });
 }
 
@@ -244,8 +266,8 @@ const server = http.createServer((req, res) => {
 
     // ====================== UNIVERSAL CORS HEADERS (THE FIX) ======================
     res.setHeader('Access-Control-Allow-Origin', '*'); 
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); 
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); 
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE'); 
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With'); 
     res.setHeader('Content-Type', 'application/json');
     // ==============================================================================
 
@@ -277,6 +299,34 @@ server.listen(CONFIG.port, () => {
     console.log('📍 Server running at: http://localhost:' + CONFIG.port);
     console.log('📱 Twilio Status:', client ? "ACTIVE ✅" : "INACTIVE ⚠️");
     console.log('📞 Your Twilio Number:', CONFIG.twilioPhoneNumber);
-    console.log('🚀 Features Enabled: Sensors | AI Predictions | Emergency SOS | Real SMS Alerts');
+    console.log('🔐 Using Account SID:', CONFIG.accountSid.substring(0, 8) + '...');
+    
+    if (!client) {
+        console.log('🚨 IMPORTANT: Twilio is INACTIVE. To enable real SMS:');
+        console.log('   1. Set TWILIO_ACCOUNT_SID environment variable');
+        console.log('   2. Set TWILIO_AUTH_TOKEN environment variable');
+        console.log('   3. Restart the server');
+    }
+    
+    console.log('🚀 Features Enabled: Sensors | AI Predictions | Emergency SOS | ' + (client ? 'Real SMS Alerts' : 'Demo SMS Alerts'));
     console.log('=============================================================\n');
+});
+
+// Handle server errors gracefully
+server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+        console.error(`❌ Port ${CONFIG.port} is already in use. Try a different port.`);
+    } else {
+        console.error('❌ Server error:', error.message);
+    }
+    process.exit(1);
+});
+
+// Handle graceful shutdown
+process.on('SIGINT', () => {
+    console.log('\n🛑 Shutting down SmartFishing server gracefully...');
+    server.close(() => {
+        console.log('✅ Server closed successfully.');
+        process.exit(0);
+    });
 });
